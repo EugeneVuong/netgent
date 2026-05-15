@@ -20,7 +20,7 @@ dependencies = [
     "langchain-community>=0.4.1",
     "langchain-core>=1.2.20",
     "langchain>=1.2.13",
-    "browser-use==0.5.11",
+    "browser-use==0.12.6",
     "selenium>=4.20.0",
 ]
 
