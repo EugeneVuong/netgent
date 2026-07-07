@@ -304,7 +304,7 @@ async def main():
                     {
                         "type": "go_to_url",
                         "params": {
-                            "url": "data:text/html,<html><body><h1>Workflow Runner Test</h1></body></html>",
+                            "url": "data:text/html,<html><body><h1>Workflow Runner Test</h1></body></html>",  # noqa: E501
                             "new_tab": False,
                         },
                     },

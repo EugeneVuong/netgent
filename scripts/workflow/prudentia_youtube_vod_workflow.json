@@ -1,0 +1,40 @@
+{
+  "specification": "Prudentia YouTube video-on-demand workload (SIGCOMM '24, Table 1).\n1. Go to 'https://www.youtube.com/watch?v=<secret>video_id</secret>&autoplay=1' (reference video: Big Buck Bunny).\n2. Wait briefly for the player page to load and autoplay to start.\n3. Keep the video playing for <secret>watch_seconds</secret> seconds (Prudentia runs 600 s and ignores the first/last 120 s).",
+  "states": [
+    {
+      "checks": [
+        {
+          "type": "always_true",
+          "params": {}
+        }
+      ],
+      "actions": [
+        {
+          "type": "go_to_url",
+          "params": {
+            "url": "https://www.youtube.com/watch?v={{video_id}}&autoplay=1",
+            "new_tab": false
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "5"
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "{{watch_seconds}}"
+          }
+        }
+      ],
+      "end_state": "Workflow Completed",
+      "executed": []
+    }
+  ],
+  "parameters": [
+    "video_id",
+    "watch_seconds"
+  ]
+}

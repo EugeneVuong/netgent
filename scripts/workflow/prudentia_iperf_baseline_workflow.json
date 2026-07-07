@@ -1,0 +1,30 @@
+{
+  "specification": "Prudentia iPerf baseline workload (SIGCOMM '24, Table 1: single bulk-transfer flow used as the CCA-only comparison point).\n1. Run an iperf3 bulk transfer against <secret>host</secret> on port <secret>port</secret> for <secret>duration_seconds</secret> seconds (Prudentia runs 600 s; the client's kernel CCA determines the BBR/Cubic/NewReno variant).",
+  "states": [
+    {
+      "checks": [
+        {
+          "type": "always_true",
+          "params": {}
+        }
+      ],
+      "actions": [
+        {
+          "type": "iperf",
+          "params": {
+            "host": "{{host}}",
+            "port": "{{port}}",
+            "duration_seconds": "{{duration_seconds}}"
+          }
+        }
+      ],
+      "end_state": "Workflow Completed",
+      "executed": []
+    }
+  ],
+  "parameters": [
+    "host",
+    "port",
+    "duration_seconds"
+  ]
+}

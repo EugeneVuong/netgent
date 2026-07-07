@@ -64,9 +64,7 @@ class NetGent:
         action_period: float | None = None,
     ) -> dict[str, Any]:
         if type == "shell":
-            runner = self._shell_runner(
-                parameters=parameters, action_period=action_period
-            )
+            runner = self._shell_runner(parameters=parameters, action_period=action_period)
             try:
                 output = await runner.run(workflow)
             except Exception as exc:

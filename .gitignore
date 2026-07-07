@@ -27,6 +27,7 @@ htmlcov/
 .cache/
 
 # --- Env / secrets (never commit) ---
+key.md
 .env
 .env.local
 .env.*.local

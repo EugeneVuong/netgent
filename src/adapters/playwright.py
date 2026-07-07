@@ -5,11 +5,15 @@ from typing import Literal
 from playwright.async_api import (
     Browser,
     BrowserContext,
-    Error as PlaywrightError,
     Page,
     Playwright,
-    TimeoutError as PlaywrightTimeoutError,
     async_playwright,
+)
+from playwright.async_api import (
+    Error as PlaywrightError,
+)
+from playwright.async_api import (
+    TimeoutError as PlaywrightTimeoutError,
 )
 
 from adapters.base import AdapterResult, BaseAdapter

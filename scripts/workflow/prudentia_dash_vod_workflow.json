@@ -1,0 +1,40 @@
+{
+  "specification": "DASH reference-client video-on-demand workload (stand-in for Prudentia's VoD category using the public dash.js reference player — no account needed).\n1. Open the DASH-IF reference player with manifest <secret>mpd_url</secret> and autoLoad enabled (reference stream: Big Buck Bunny on Akamai).\n2. Wait briefly for the player to load and playback to start.\n3. Keep the video playing for <secret>watch_seconds</secret> seconds.",
+  "states": [
+    {
+      "checks": [
+        {
+          "type": "always_true",
+          "params": {}
+        }
+      ],
+      "actions": [
+        {
+          "type": "go_to_url",
+          "params": {
+            "url": "https://reference.dashif.org/dash.js/latest/samples/dash-if-reference-player/index.html?mpd={{mpd_url}}&autoLoad=true",
+            "new_tab": false
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "5"
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "{{watch_seconds}}"
+          }
+        }
+      ],
+      "end_state": "Workflow Completed",
+      "executed": []
+    }
+  ],
+  "parameters": [
+    "mpd_url",
+    "watch_seconds"
+  ]
+}

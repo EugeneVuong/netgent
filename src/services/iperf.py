@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from adapters.iperf import IperfAdapter, IPerf3BinaryNotFoundError, IPerf3Error
+from adapters.iperf import IPerf3BinaryNotFoundError, IPerf3Error, IperfAdapter
 from core.context import ExecutionContext
 from schema import ProcessOutcome
 from services.base import BaseService

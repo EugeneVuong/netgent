@@ -45,3 +45,9 @@ src = ["src", "tests", "scripts"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# Long lines in these files are LLM prompt / workflow-specification strings;
+# rewrapping them would change the string content sent to the model.
+"scripts/netgent/*.py" = ["E501"]
+"src/agents/subagents/shell/prompts.py" = ["E501"]

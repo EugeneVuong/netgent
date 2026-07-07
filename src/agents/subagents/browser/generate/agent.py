@@ -1,11 +1,10 @@
-import asyncio
 import os
 from typing import Any, NotRequired
 
 from browser_use import Agent, AgentHistoryList, Browser
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.runtime import Runtime
-from playwright.async_api import Playwright, async_playwright
+from playwright.async_api import Playwright
 from pydantic import BaseModel, ConfigDict
 
 from agents.model_factory import get_browser_use_model
@@ -67,7 +66,8 @@ def _build_task_with_parameters(task: str, parameters: dict[str, str]) -> str:
     for name in parameters:
         lines.append(f"  - {name}: use <secret>{name}</secret> when an action needs this value")
     lines.append(
-        "Do not hardcode literal parameter values into actions when one of these placeholders applies."
+        "Do not hardcode literal parameter values into actions "
+        "when one of these placeholders applies."
     )
     return "\n".join(lines)
 
@@ -87,7 +87,8 @@ async def execute_task(
         browser, browser_context, _ = await open_browser_session(playwright)
 
         try:
-            # We don't give it the ability to Change Pages. It can only stay only on one page at a time.
+            # We don't give it the ability to Change Pages.
+            # It can only stay only on one page at a time.
             browser_agent = Agent(
                 browser=Browser(
                     browser=browser,

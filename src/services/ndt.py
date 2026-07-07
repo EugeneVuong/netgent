@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from adapters.ndt import NdtAdapter, NDT7BinaryNotFoundError, NDT7Error
+from adapters.ndt import NDT7BinaryNotFoundError, NDT7Error, NdtAdapter
 from core.context import ExecutionContext
 from schema import ProcessOutcome
 from services.base import BaseService

@@ -1,0 +1,40 @@
+{
+  "specification": "Prudentia Vimeo video-on-demand workload (SIGCOMM '24, Table 1: BBR, 2 flows, max 14 Mbps, 7 bitrates up to 4K).\n1. Open the Vimeo embed player for video <secret>video_id</secret> (reference video: Big Buck Bunny) with muted autoplay.\n2. Wait briefly for the player to load and playback to start.\n3. Keep the video playing for <secret>watch_seconds</secret> seconds (Prudentia runs 600 s).",
+  "states": [
+    {
+      "checks": [
+        {
+          "type": "always_true",
+          "params": {}
+        }
+      ],
+      "actions": [
+        {
+          "type": "go_to_url",
+          "params": {
+            "url": "https://player.vimeo.com/video/{{video_id}}?autoplay=1&muted=1",
+            "new_tab": false
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "5"
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "{{watch_seconds}}"
+          }
+        }
+      ],
+      "end_state": "Workflow Completed",
+      "executed": []
+    }
+  ],
+  "parameters": [
+    "video_id",
+    "watch_seconds"
+  ]
+}

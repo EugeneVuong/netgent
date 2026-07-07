@@ -22,9 +22,7 @@ from main import NetGent  # noqa: E402
 
 def _strip_artifacts(value):
     if isinstance(value, dict):
-        return {
-            k: _strip_artifacts(v) for k, v in value.items() if k not in ("screenshot", "har")
-        }
+        return {k: _strip_artifacts(v) for k, v in value.items() if k not in ("screenshot", "har")}
     if isinstance(value, list):
         return [_strip_artifacts(v) for v in value]
     return value

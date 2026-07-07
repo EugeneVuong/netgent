@@ -1,0 +1,30 @@
+{
+  "specification": "Prudentia-style bulk file download (stand-in for the SIGCOMM '24 file-transfer category — Dropbox/Drive/OneDrive/Mega all download a 10 GB file; this uses a public speed-test file so no account or upload is needed).\n1. Download <secret>url</secret> with wget, discarding the payload to /dev/null. Transfer duration is governed by the file size (pick 1GB.bin/10GB.bin to approximate Prudentia's 600 s workload for your link speed).\n2. <secret>timeout_seconds</secret> is wget's network stall/connect timeout, not a duration cap.",
+  "states": [
+    {
+      "checks": [
+        {
+          "type": "always_true",
+          "params": {}
+        }
+      ],
+      "actions": [
+        {
+          "type": "wget",
+          "params": {
+            "url": "{{url}}",
+            "output_file": "/dev/null",
+            "timeout_seconds": "{{timeout_seconds}}",
+            "tries": 1
+          }
+        }
+      ],
+      "end_state": "Workflow Completed",
+      "executed": []
+    }
+  ],
+  "parameters": [
+    "url",
+    "timeout_seconds"
+  ]
+}
