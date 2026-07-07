@@ -34,9 +34,7 @@ def main() -> None:
     parser.add_argument("--pause-seconds", default="2")
     parser.add_argument(
         "--workflow",
-        default=os.path.join(
-            os.path.dirname(__file__), "workflow", "run_wikipedia_workflow.json"
-        ),
+        default=os.path.join(os.path.dirname(__file__), "workflow", "run_wikipedia_workflow.json"),
         help="Path to the saved workflow JSON.",
     )
     parser.add_argument("--headless", action="store_true")
