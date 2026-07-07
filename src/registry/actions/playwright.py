@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import base64
 from functools import wraps
-from pathlib import Path
 from typing import Any
 
 from playwright.async_api import Error as PlaywrightError

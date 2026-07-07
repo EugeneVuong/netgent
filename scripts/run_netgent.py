@@ -26,8 +26,9 @@ sys.path.insert(0, os.path.join(_HERE, "..", "src"))
 # is Linux-only, and this script is for local testing only.
 os.environ["USE_LOCAL"] = "true"
 
-from main import NetGent
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # noqa: E402
+
+from main import NetGent  # noqa: E402
 
 # Load .env from repo root
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))

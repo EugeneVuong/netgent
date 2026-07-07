@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from registry.base import RegistryBase, RegistryDefinition
-from registry.context import Context, ContextInput
+from registry.context import ContextInput
 from registry.exception import NetGentWorkflowError
 
 RegisteredTrigger = Callable[..., Any]
@@ -108,7 +108,7 @@ trigger_registry = TriggerRegistry()
 trigger = trigger_registry.trigger
 register_trigger = trigger_registry.trigger
 
-from registry.triggers.base_action import always_true
+from registry.triggers.base_action import always_true  # noqa: E402
 
 __all__ = [
     "TriggerDefinition",

@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import Literal
 
-from utils.execution import build_execution_command, run_subprocess
 from adapters.base import AdapterResult, BaseAdapter
 from core.errors import BusinessError, NetGentError, TransientError
 from schema import ProcessOutcome
+from utils.execution import build_execution_command, run_subprocess
 
 
 class NDT7Error(BusinessError):

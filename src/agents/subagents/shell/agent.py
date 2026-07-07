@@ -271,7 +271,7 @@ async def main():
     )
 
     workflow = {
-        "specification": "Run all three tools one by one in a single workflow. First run ping against google.com. Second run iperf3 against host speedtest.sfo12.us.leaseweb.net on port 5201. Third run ndt7 with default settings. After all three tool calls complete, summarize the results.",
+        "specification": "Run all three tools one by one in a single workflow. First run ping against google.com. Second run iperf3 against host speedtest.sfo12.us.leaseweb.net on port 5201. Third run ndt7 with default settings. After all three tool calls complete, summarize the results.",  # noqa: E501
         "states": [
             {
                 "checks": [{"type": "always_true", "params": {}}],

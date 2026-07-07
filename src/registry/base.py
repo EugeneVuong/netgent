@@ -55,7 +55,8 @@ class RegistryBase:
         if not overwrite and entry_name in self._entries:
             existing = self._get_definition_entry(self._entries[entry_name])
             raise self.ERROR(
-                f"{self.LABEL} '{entry_name}' is already registered by {self._display_name(existing)}"
+                f"{self.LABEL} '{entry_name}' is already registered "
+                f"by {self._display_name(existing)}"
             )
 
         self._set_entry_metadata(entry_obj, entry_name)
@@ -83,7 +84,8 @@ class RegistryBase:
         if target is not None and not isinstance(target, str):
             if name is not None:
                 raise self.ERROR(
-                    f"Use either `@{self.LABEL.lower()}(name=...)` or `@{self.LABEL.lower()}(...)`, not both"
+                    f"Use either `@{self.LABEL.lower()}(name=...)` "
+                    f"or `@{self.LABEL.lower()}(...)`, not both"
                 )
             return self.register(target, overwrite=overwrite)
 
@@ -105,7 +107,8 @@ class RegistryBase:
         except KeyError as exc:
             available = ", ".join(sorted(self._entries)) or "<empty>"
             raise self.ERROR(
-                f"Unknown {self.LABEL.lower()} '{entry_name}'. Available {self.LABEL.lower()}s: {available}"
+                f"Unknown {self.LABEL.lower()} '{entry_name}'. "
+                f"Available {self.LABEL.lower()}s: {available}"
             ) from exc
 
     def names(self) -> tuple[str, ...]:
