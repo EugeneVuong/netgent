@@ -1,0 +1,151 @@
+{
+  "specification": "Prudentia wikipedia.org web-browsing workload (SIGCOMM '24, section 5.2; Table 1: BBRv1.0, >5 flows, mostly text with one or two images).\n1. Load <secret>page_url</secret> in the browser.\n2. Wait <secret>gap_seconds</secret> seconds (Prudentia uses 45 s between loads).\n3. Repeat the load ten times in total.\nNote: Prudentia loads each page in a fresh Chrome instance with cache and cookies wiped; NetGent approximates this with repeated navigations inside one fresh browser context per run.",
+  "states": [
+    {
+      "checks": [
+        {
+          "type": "always_true",
+          "params": {}
+        }
+      ],
+      "actions": [
+        {
+          "type": "go_to_url",
+          "params": {
+            "url": "{{page_url}}",
+            "new_tab": false
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "{{gap_seconds}}"
+          }
+        },
+        {
+          "type": "go_to_url",
+          "params": {
+            "url": "{{page_url}}",
+            "new_tab": false
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "{{gap_seconds}}"
+          }
+        },
+        {
+          "type": "go_to_url",
+          "params": {
+            "url": "{{page_url}}",
+            "new_tab": false
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "{{gap_seconds}}"
+          }
+        },
+        {
+          "type": "go_to_url",
+          "params": {
+            "url": "{{page_url}}",
+            "new_tab": false
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "{{gap_seconds}}"
+          }
+        },
+        {
+          "type": "go_to_url",
+          "params": {
+            "url": "{{page_url}}",
+            "new_tab": false
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "{{gap_seconds}}"
+          }
+        },
+        {
+          "type": "go_to_url",
+          "params": {
+            "url": "{{page_url}}",
+            "new_tab": false
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "{{gap_seconds}}"
+          }
+        },
+        {
+          "type": "go_to_url",
+          "params": {
+            "url": "{{page_url}}",
+            "new_tab": false
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "{{gap_seconds}}"
+          }
+        },
+        {
+          "type": "go_to_url",
+          "params": {
+            "url": "{{page_url}}",
+            "new_tab": false
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "{{gap_seconds}}"
+          }
+        },
+        {
+          "type": "go_to_url",
+          "params": {
+            "url": "{{page_url}}",
+            "new_tab": false
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "{{gap_seconds}}"
+          }
+        },
+        {
+          "type": "go_to_url",
+          "params": {
+            "url": "{{page_url}}",
+            "new_tab": false
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "{{gap_seconds}}"
+          }
+        }
+      ],
+      "end_state": "Workflow Completed",
+      "executed": []
+    }
+  ],
+  "parameters": [
+    "page_url",
+    "gap_seconds"
+  ]
+}

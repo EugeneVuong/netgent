@@ -1,0 +1,106 @@
+{
+  "specification": "1. Go to a Wikipedia article at <secret>url</secret>.\n2. Wait for the page to load.\n3. Scroll down one page at a time, pausing <secret>pause_seconds</secret> seconds between scrolls, five times.\n4. Scroll back to the top of the article.",
+  "states": [
+    {
+      "checks": [
+        {
+          "type": "always_true",
+          "params": {}
+        }
+      ],
+      "actions": [
+        {
+          "type": "go_to_url",
+          "params": {
+            "url": "{{url}}",
+            "new_tab": false
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "{{pause_seconds}}"
+          }
+        },
+        {
+          "type": "scroll",
+          "params": {
+            "down": true,
+            "num_pages": 1
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "{{pause_seconds}}"
+          }
+        },
+        {
+          "type": "scroll",
+          "params": {
+            "down": true,
+            "num_pages": 1
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "{{pause_seconds}}"
+          }
+        },
+        {
+          "type": "scroll",
+          "params": {
+            "down": true,
+            "num_pages": 1
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "{{pause_seconds}}"
+          }
+        },
+        {
+          "type": "scroll",
+          "params": {
+            "down": true,
+            "num_pages": 1
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "{{pause_seconds}}"
+          }
+        },
+        {
+          "type": "scroll",
+          "params": {
+            "down": true,
+            "num_pages": 1
+          }
+        },
+        {
+          "type": "wait",
+          "params": {
+            "seconds": "{{pause_seconds}}"
+          }
+        },
+        {
+          "type": "scroll",
+          "params": {
+            "down": false,
+            "num_pages": 5
+          }
+        }
+      ],
+      "end_state": "Workflow Completed",
+      "executed": []
+    }
+  ],
+  "parameters": [
+    "url",
+    "pause_seconds"
+  ]
+}
