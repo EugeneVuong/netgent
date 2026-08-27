@@ -1,3 +1,4 @@
+#!/usr/bin/env -S uv run python
 """Replay the DuckDuckGo -> YouTube search-and-play workflow — engine only, no LLM.
 
 Flow: open DuckDuckGo, search for "youtube", click the YouTube result, search
