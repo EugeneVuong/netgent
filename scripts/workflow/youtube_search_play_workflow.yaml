@@ -47,4 +47,10 @@ states:
       - type: wait
         params:
           seconds: "{{watch_seconds}}"
+      # Fail the run if the player is paused/ended — "all actions ran" is not
+      # the same as "the video played".
+      - type: assert_media_playing
+        params:
+          selector: video
+          min_seconds: 5
     end_state: Workflow Completed

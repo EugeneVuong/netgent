@@ -96,6 +96,7 @@ Registered in `src/registry/actions/playwright.py`:
 | `scroll_to_text` | `text` |
 | `send_keys` | `keys` |
 | `select_dropdown_option` | `selector`, `option` |
+| `assert_media_playing` | `selector` (default `video`), `min_seconds` — fails the run unless the media element is playing and past `min_seconds` |
 
 ### How parameters reach the LLM agent
 
