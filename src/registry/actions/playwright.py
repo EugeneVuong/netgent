@@ -11,6 +11,8 @@ from playwright.async_api import Page
 from registry.actions.base import ActionContext, action
 from registry.actions.exception import ActionError
 
+SCREENSHOT_TIMEOUT_MS = 10_000
+
 
 def _require_page(ctx: ActionContext) -> Page:
     page = ctx.get("page")
@@ -33,7 +35,9 @@ async def _capture_progress_screenshot(ctx: ActionContext | None) -> str | None:
         return None
 
     try:
-        screenshot = await page.screenshot(type="png")
+        # Hard cap: a page mid-navigation (or a media-heavy watch page) can
+        # otherwise stall screenshot() indefinitely and hang the whole run.
+        screenshot = await page.screenshot(type="png", timeout=SCREENSHOT_TIMEOUT_MS)
     except Exception:
         return None
 
@@ -129,6 +133,26 @@ def _is_network_error(error: Exception) -> bool:
             "net::",
         )
     )
+
+
+async def _wait_for_selector(locator: Any, timeout_ms: int) -> None:
+    """Give a selector up to *timeout_ms* to appear before we count matches.
+
+    A bare ``count()`` is instantaneous, so an action issued while the page is
+    still navigating (e.g. right after pressing Enter on a search box) would
+    fail with "matched no elements" even though the element shows up a moment
+    later. Errors are swallowed; the caller re-checks ``count()``.
+    """
+    try:
+        await locator.wait_for(state="attached", timeout=timeout_ms)
+    except Exception:
+        pass
+
+
+def _no_match_message(selector: str, page: Page) -> str:
+    # Include the URL so a bot-check interstitial (e.g. google.com/sorry/) is
+    # distinguishable from a genuinely wrong selector in the failure log.
+    return f"Selector matched no elements: {selector} (page url: {page.url})"
 
 
 async def _prepare_locator(locator: Any, timeout_ms: int) -> None:
@@ -312,9 +336,10 @@ async def click_element(
     base_locator = _locate(page, normalized_selector)
     locator = base_locator.first
 
+    await _wait_for_selector(locator, timeout_ms)
     count = await base_locator.count()
     if count == 0:
-        raise ActionError(f"Selector matched no elements: {selector}")
+        raise ActionError(_no_match_message(selector, page))
 
     await _prepare_locator(locator, timeout_ms)
 
@@ -414,9 +439,10 @@ async def input_text(
     normalized_selector = _normalize_selector(selector)
     locator = _locate(page, normalized_selector).first
 
+    await _wait_for_selector(locator, timeout_ms)
     count = await locator.count()
     if count == 0:
-        raise ActionError(f"Selector matched no elements: {selector}")
+        raise ActionError(_no_match_message(selector, page))
 
     try:
         await locator.wait_for(state="attached", timeout=timeout_ms)
@@ -557,9 +583,10 @@ async def scroll(
     normalized_selector = _normalize_selector(selector)
     locator = _locate(page, normalized_selector).first
 
+    await _wait_for_selector(locator, 2_000)
     count = await locator.count()
     if count == 0:
-        raise ActionError(f"Selector matched no elements: {selector}")
+        raise ActionError(_no_match_message(selector, page))
 
     try:
         await locator.scroll_into_view_if_needed(timeout=2_000)
@@ -736,9 +763,10 @@ async def select_dropdown_option(
     normalized_selector = _normalize_selector(selector)
     locator = _locate(page, normalized_selector).first
 
+    await _wait_for_selector(locator, 2_000)
     count = await locator.count()
     if count == 0:
-        raise ActionError(f"Selector matched no elements: {selector}")
+        raise ActionError(_no_match_message(selector, page))
 
     try:
         await locator.wait_for(state="attached", timeout=timeout_ms)

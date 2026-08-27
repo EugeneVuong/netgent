@@ -271,17 +271,46 @@ def get_browserless_ws_endpoint() -> str | None:
     return endpoint or None
 
 
-async def open_browser_session(playwright: Playwright, *, record_har_path: str | None = None):
-    endpoint = get_browserless_ws_endpoint()
+def get_browser_channel() -> str | None:
+    """Playwright browser channel (e.g. ``chrome``) from ``BROWSER_CHANNEL``.
+
+    Google search serves its "unusual traffic" interstitial to Playwright's
+    bundled Chromium-for-Testing even with stealth patches, but lets a real
+    Google Chrome install through — set ``BROWSER_CHANNEL=chrome`` for
+    workflows that touch Google properties.
+    """
+    channel = os.getenv("BROWSER_CHANNEL", "").strip()
+    return channel or None
+
+
+async def open_browser_session(
+    playwright: Playwright,
+    *,
+    record_har_path: str | None = None,
+    headless: bool | None = None,
+    channel: str | None = None,
+    endpoint: str | None = None,
+):
+    """Open a stealth-configured browser, context, and page.
+
+    ``headless`` / ``channel`` / ``endpoint`` default to the
+    ``BROWSER_USE_HEADLESS`` / ``BROWSER_CHANNEL`` / ``BROWSERLESS_WS_ENDPOINT``
+    env vars when not given, so the LLM generation path and the engine
+    replay path launch identically-configured browsers.
+    """
+    endpoint = endpoint if endpoint is not None else get_browserless_ws_endpoint()
     stealth = _stealth_enabled()
+    resolved_channel = channel if channel is not None else get_browser_channel()
     if endpoint:
         browser = await playwright.chromium.connect(endpoint)
     else:
         launch_args = [*MEDIA_STREAM_DISABLE_ARGS, *GPU_RENDERING_ARGS]
         launch_kwargs: dict[str, Any] = {
-            "headless": _is_headless(),
+            "headless": _is_headless() if headless is None else headless,
             "args": launch_args,
         }
+        if resolved_channel:
+            launch_kwargs["channel"] = resolved_channel
         if stealth:
             launch_kwargs["args"] = [*launch_args, *STEALTH_LAUNCH_ARGS]
             launch_kwargs["ignore_default_args"] = ["--enable-automation"]
@@ -296,7 +325,12 @@ async def open_browser_session(playwright: Playwright, *, record_har_path: str |
         "permissions": ["camera", "microphone"],
         "viewport": {"width": 1280, "height": 720},
     }
-    if stealth:
+    # Only spoof the UA for the bundled Chromium-for-Testing. A real channel
+    # (e.g. system Chrome) already sends a genuine UA, and overriding it with
+    # a different version string than the browser's Client Hints
+    # (``Sec-CH-UA``) report is itself a bot signal — Google's search
+    # interstitial fires on exactly that mismatch.
+    if stealth and not resolved_channel:
         context_kwargs["user_agent"] = STEALTH_USER_AGENT
     if record_har_path:
         context_kwargs["record_har_path"] = record_har_path

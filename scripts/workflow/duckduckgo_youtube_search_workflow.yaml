@@ -1,0 +1,73 @@
+# DuckDuckGo -> YouTube search-and-play workflow (hand-authored, YAML).
+#
+# Same prompt as the Google variant, but via DuckDuckGo, which has no
+# reCAPTCHA rate check — so runs can be back-to-back and headless is fine:
+#   "Search for youtube, click the link, search something on YouTube, play it."
+#
+# Run with:
+#   uv run python scripts/replay_yaml_workflow.py \
+#       scripts/workflow/duckduckgo_youtube_search_workflow.yaml \
+#       --param search_query=youtube --param youtube_query="big buck bunny" \
+#       --param watch_seconds=20 --runs 3
+
+specification: |
+  1. Go to https://duckduckgo.com.
+  2. Type <secret>search_query</secret> into the DuckDuckGo search box and press Enter, then wait for the results page.
+  3. Click the first result, which is the youtube.com link.
+  4. On YouTube, type <secret>youtube_query</secret> into the search box and press Enter, then wait for the results.
+  5. Click the first regular video in the results (not an ad, Short, channel, or playlist).
+  6. Keep the video playing for <secret>watch_seconds</secret> seconds.
+
+parameters:
+  - search_query
+  - youtube_query
+  - watch_seconds
+
+states:
+  - checks:
+      - type: always_true
+        params: {}
+    actions:
+      # --- DuckDuckGo ---
+      - type: go_to_url
+        params:
+          url: https://duckduckgo.com
+          new_tab: false
+      - type: input_text
+        params:
+          selector: textarea[name="q"]
+          text: "{{search_query}}"
+      - type: send_keys
+        params:
+          keys: Enter
+      - type: wait
+        params:
+          seconds: "5"
+      - type: click_element
+        params:
+          selector: a[data-testid="result-title-a"]
+          timeout_ms: 10000
+      # --- YouTube ---
+      # Let YouTube's app hydrate before typing; pressing Enter before the
+      # search form's handler is attached leaves the query unsubmitted.
+      - type: wait
+        params:
+          seconds: "3"
+      - type: input_text
+        params:
+          selector: input[name="search_query"]
+          text: "{{youtube_query}}"
+      - type: send_keys
+        params:
+          keys: Enter
+      - type: wait
+        params:
+          seconds: "5"
+      - type: click_element
+        params:
+          selector: ytd-video-renderer a#video-title
+          timeout_ms: 10000
+      - type: wait
+        params:
+          seconds: "{{watch_seconds}}"
+    end_state: Workflow Completed
