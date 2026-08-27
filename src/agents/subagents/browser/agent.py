@@ -64,6 +64,21 @@ def _substitute_embedded_secrets(value: str, parameters: dict[str, str]) -> str 
     return new_value if made_change else None
 
 
+MIN_EMBEDDED_VALUE_LEN = 4
+
+
+def _substitute_embedded_values(value: str, parameters: dict[str, str]) -> str | None:
+    """Replace literal parameter values embedded in *value* with ``{{name}}``.
+
+    Returns the rewritten string, or ``None`` if nothing was replaced."""
+    result = value
+    for name, param_value in sorted(parameters.items(), key=lambda kv: -len(kv[1])):
+        if len(param_value) < MIN_EMBEDDED_VALUE_LEN or param_value not in result:
+            continue
+        result = result.replace(param_value, _browser_parameter_placeholder(name))
+    return result if result != value else None
+
+
 def _infer_browser_parameter_name(
     *,
     action_type: str,
@@ -121,6 +136,15 @@ def _parameterize_browser_workflow(
                     replacement_name = value_to_key[param_value]
                 elif isinstance(param_value, (int, float)):
                     replacement_name = value_to_key.get(str(param_value))
+                elif isinstance(param_value, str):
+                    # Value embedded in a larger string (e.g. a video id inside
+                    # a watch URL). Longest values first so a value that is a
+                    # substring of another can't pre-empt it; very short values
+                    # are skipped because they'd match incidental text.
+                    embedded = _substitute_embedded_values(param_value, parameters)
+                    if embedded is not None:
+                        params[param_name] = embedded
+                        continue
 
                 if replacement_name is None:
                     replacement_name = _infer_browser_parameter_name(

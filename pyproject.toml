@@ -12,6 +12,7 @@ dependencies = [
     "Pillow>=11.2.1",
     "psycopg[binary]>=3.2.6",
     "python-dotenv>=1.2.2",
+    "pyyaml>=6.0",
     "sqlalchemy>=2.0.36",
     # NOTE: langchain stack pinned to 0.3.x so it stays compatible with
     # browser-use==0.5.11 (which pins anthropic==0.58.2). Don't bump these

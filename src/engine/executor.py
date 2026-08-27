@@ -103,6 +103,22 @@ from registry.actions.network import NETWORK_ACTIONS  # noqa: E402
 logger = logging.getLogger(__name__)
 
 
+class StateExecutionError(RuntimeError):
+    """An action failed mid-state.
+
+    Carries the results of the actions that completed before the failure
+    (including their progress screenshots) so callers can surface them for
+    debugging instead of losing the whole run's evidence.
+    """
+
+    def __init__(self, action_index: int, action_type: str, cause: Exception, results: list):
+        super().__init__(f"action {action_index} ({action_type}) failed: {cause}")
+        self.action_index = action_index
+        self.action_type = action_type
+        self.cause = cause
+        self.partial_results = results
+
+
 class StateExecutor:
     def __init__(
         self,
@@ -180,7 +196,19 @@ class StateExecutor:
                 len(actions),
                 action.get("type", "unknown"),
             )
-            results.append(await self.execute(action))
+            try:
+                results.append(await self.execute(action))
+            except Exception as exc:
+                logger.error(
+                    "Action %s/%s (%s) failed: %s",
+                    index + 1,
+                    len(actions),
+                    action.get("type", "unknown"),
+                    exc,
+                )
+                raise StateExecutionError(
+                    index, str(action.get("type", "unknown")), exc, results
+                ) from exc
 
             if index < len(actions) - 1:
                 await asyncio.sleep(self.config["action_period"])
@@ -189,4 +217,4 @@ class StateExecutor:
         return results
 
 
-__all__ = ["StateExecutor"]
+__all__ = ["StateExecutionError", "StateExecutor"]

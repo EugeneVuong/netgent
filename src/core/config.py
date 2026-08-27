@@ -135,6 +135,11 @@ class Settings(BaseSettings):
     # When set, browser actions connect to a remote Browserless instance over
     # CDP instead of launching a local Chromium.
     BROWSERLESS_WS_ENDPOINT: str | None = None
+    # Playwright browser channel, e.g. "chrome" to drive the system Google
+    # Chrome instead of the bundled Chromium-for-Testing. Google search
+    # blocks the bundled build (and every headless mode) with an "unusual
+    # traffic" interstitial; real headful Chrome gets through.
+    BROWSER_CHANNEL: str | None = None
 
     # ── Env-specific overrides ───────────────────────────────────────────────
 
