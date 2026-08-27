@@ -700,6 +700,61 @@ async def send_keys(keys: str, ctx: ActionContext | None = None) -> dict[str, An
         }
 
 
+@action(name="assert_media_playing")
+@with_progress_screenshot
+async def assert_media_playing(
+    selector: str = "video",
+    min_seconds: float = 1.0,
+    ctx: ActionContext | None = None,
+) -> dict[str, Any]:
+    """Fail the workflow unless a media element is actually playing.
+
+    A watch page can look "done" (all actions succeeded) while the player
+    is paused — e.g. a Play-button click that toggled an autoplaying video
+    off. Checks the first element matching *selector* is not paused/ended and
+    its ``currentTime`` has advanced past *min_seconds*.
+    """
+    ctx = ctx or ActionContext()
+    page = _resolve_page(ctx)
+    try:
+        state = await page.evaluate(
+            """(sel) => {
+                const el = document.querySelector(sel);
+                if (!el) return null;
+                return {
+                    paused: el.paused,
+                    ended: el.ended,
+                    currentTime: el.currentTime,
+                    readyState: el.readyState,
+                };
+            }""",
+            selector,
+        )
+    except PlaywrightError as exc:
+        raise ActionError(f"Failed to inspect media element {selector!r}") from exc
+
+    if state is None:
+        raise ActionError(f"No media element matched selector {selector!r} (page url: {page.url})")
+    playing = (
+        not state["paused"]
+        and not state["ended"]
+        and float(state["currentTime"] or 0) >= float(min_seconds)
+    )
+    if not playing:
+        raise ActionError(
+            f"Media {selector!r} is not playing: paused={state['paused']} "
+            f"ended={state['ended']} currentTime={state['currentTime']:.1f}s "
+            f"(page url: {page.url})"
+        )
+    return {
+        "selector": selector,
+        "playing": True,
+        "current_time": state["currentTime"],
+        "url": page.url,
+        "message": f"Media is playing at {state['currentTime']:.1f}s",
+    }
+
+
 @action(name="scroll_to_text")
 @with_progress_screenshot
 async def scroll_to_text(
@@ -887,6 +942,7 @@ async def select_dropdown_option(
 
 
 PLAYWRIGHT_ACTIONS = (
+    assert_media_playing,
     go_to_url,
     go_back,
     wait,

@@ -333,9 +333,13 @@ async def open_browser_session(
     if stealth and not resolved_channel:
         context_kwargs["user_agent"] = STEALTH_USER_AGENT
     if record_har_path:
+        # Minimal HAR without response bodies. Embedding content made the
+        # Playwright driver buffer every media chunk of a streaming <video>;
+        # it then stopped answering protocol calls (screenshot, close) and
+        # the run hung on its final action, with no timeout able to fire.
         context_kwargs["record_har_path"] = record_har_path
-        context_kwargs["record_har_mode"] = "full"
-        context_kwargs["record_har_content"] = "embed"
+        context_kwargs["record_har_mode"] = "minimal"
+        context_kwargs["record_har_content"] = "omit"
     browser_context = await browser.new_context(**context_kwargs)
     if stealth:
         await browser_context.add_init_script(STEALTH_INIT_SCRIPT)

@@ -62,6 +62,24 @@ def _write_workflow(workflow: dict, filename: str) -> str:
     return path
 
 
+def _append_playing_assertion(workflow: dict) -> dict:
+    """Append ``assert_media_playing`` so a replay fails if the player is
+    paused — the LLM never emits it, and "all actions ran" alone does not
+    prove the video played."""
+    states = workflow.get("states") or []
+    if not states:
+        return workflow
+    actions = states[-1].setdefault("actions", [])
+    if not any(a.get("type") == "assert_media_playing" for a in actions):
+        actions.append(
+            {
+                "type": "assert_media_playing",
+                "params": {"selector": "video", "min_seconds": 5},
+            }
+        )
+    return workflow
+
+
 def _action_signature(workflow: dict) -> list[str]:
     """Compact per-action fingerprint used to compare generated attempts."""
     signature: list[str] = []
@@ -92,7 +110,7 @@ async def main() -> None:
     4. Once on YouTube, wait a few seconds for the page to finish loading.
     5. Type <secret>youtube_query</secret> into the YouTube search box and press Enter.
     6. In the search results, click the first regular video (not an ad, Short, channel, or playlist).
-    7. Make sure the video is playing. If it is paused, click the play button once.
+    7. The video starts playing automatically once the watch page loads. Do not click the player or the play button, since that would pause it.
     8. Keep the video playing for <secret>watch_seconds</secret> seconds, then stop."""
     parameters = {
         "search_query": args.search_query,
@@ -112,6 +130,7 @@ async def main() -> None:
         workflow = generated.get("workflow")
         result = generated.get("result") or {}
         if isinstance(workflow, dict):
+            workflow = _append_playing_assertion(workflow)
             attempt_path = _write_workflow(workflow, f"{WORKFLOW_NAME}.attempt{attempt:02d}.json")
             print(f"Wrote attempt workflow to {attempt_path}")
             signatures.append(_action_signature(workflow))

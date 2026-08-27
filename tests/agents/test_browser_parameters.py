@@ -86,3 +86,14 @@ def test_validate_parameters_rejects_bad_names_and_empty_values():
     with pytest.raises(ValueError):
         validate_parameters({"query": "   "})
     validate_parameters({"ok_name": "value"})
+
+
+def test_wait_with_different_value_is_not_inferred_as_parameter():
+    wf = _workflow(
+        {"type": "wait", "params": {"seconds": "3"}},
+        {"type": "click_element", "params": {"selector": "a#video-title"}},
+        {"type": "wait", "params": {"seconds": "20"}},
+    )
+    out = _parameterize_browser_workflow(wf, {"watch_seconds": "20"})
+    seconds = [a["params"]["seconds"] for a in out["states"][0]["actions"] if a["type"] == "wait"]
+    assert seconds == ["3", "{{watch_seconds}}"]

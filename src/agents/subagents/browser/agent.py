@@ -94,15 +94,10 @@ def _infer_browser_parameter_name(
         if len(candidates) == 1:
             return candidates[0]
 
-    if action_type == "wait" and param_name == "seconds":
-        candidates = [
-            name
-            for name in parameters
-            if any(token in name.lower() for token in ("wait", "time", "seconds", "duration"))
-        ]
-        if len(candidates) == 1:
-            return candidates[0]
-
+    # No inference for ``wait`` seconds: plain parameter values are inlined
+    # into the task and matched back by exact value, so a wait whose value
+    # differs from the parameter (e.g. a 3 s pause for a page to settle) is a
+    # genuine constant and must not become ``{{watch_seconds}}``.
     return None
 
 
