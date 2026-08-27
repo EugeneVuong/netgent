@@ -1,3 +1,4 @@
+#!/usr/bin/env -S uv run python
 """Replay any workflow file (YAML or JSON) via the engine only — no LLM.
 
 Generic runner: point it at a workflow file and pass its declared parameters

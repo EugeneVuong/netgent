@@ -1,3 +1,4 @@
+#!/usr/bin/env -S uv run python
 """Generate and run a DuckDuckGo -> YouTube search-and-play workflow from a natural-language spec (LLM).
 
 The browser subagent searches DuckDuckGo for "youtube", clicks through to
