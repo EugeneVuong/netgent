@@ -167,36 +167,33 @@ hardcoding them:
 
 Once generated, replay it forever with Option A — no more LLM calls.
 
-## Example: Google → YouTube search-and-play
+## Example: DuckDuckGo → YouTube search-and-play
 
-`scripts/workflow/run_google_youtube_search_workflow.json` opens Google,
+`scripts/workflow/duckduckgo_youtube_search_workflow.yaml` opens DuckDuckGo,
 searches for `youtube`, clicks the YouTube result, searches YouTube for a
-query, clicks the first video, and keeps it playing. It exercises the full
-action set: `go_to_url` → `input_text` → `send_keys` → `click_element` → `wait`.
+query, clicks the first real video (ads/Shorts/channels excluded via
+`ytd-video-renderer`), and keeps it playing. It exercises the full action set:
+`go_to_url` → `input_text` → `send_keys` → `wait` → `click_element`.
 
-Google Search serves its "unusual traffic" reCAPTCHA page to Playwright's
-bundled Chromium and to **every** headless mode, so this workflow needs the
-system Google Chrome in headful mode — set `BROWSER_CHANNEL=chrome` in `.env`
-(or pass `browser_channel="chrome"` to `NetGent`). Two more things trip it:
-
-- a spoofed User-Agent whose version disagrees with Chrome's Client Hints
-  (`open_browser_session` therefore leaves the UA alone when a real channel
-  is used), and
-- **rate**: roughly three automated searches from one IP inside ~5 minutes.
-  The replay and generator scripts default to a 300 s cooldown between runs;
-  a failed run whose error URL contains `google.com/sorry/` is this check, not
-  a broken selector.
+DuckDuckGo is used rather than Google on purpose: Google Search serves a
+reCAPTCHA "unusual traffic" page to Playwright's bundled Chromium, to every
+headless mode, to a spoofed User-Agent, and to more than ~3 automated searches
+per 5 minutes from one IP. DuckDuckGo has none of that, so runs can be
+back-to-back (3/3 in testing, ~70 s each).
 
 ```bash
-# Replay 3× in fresh browsers and print a consistency summary. Each run writes
+# Replay 3× in fresh browsers with a consistency summary. Each run writes
 # per-action screenshots, run.log, and result.json under
-# debug_artifacts/google_youtube_search/<run-id>/.
-uv run python scripts/replay_google_youtube_search_workflow.py \
-    --youtube-query "big buck bunny" --watch-seconds 20 --runs 3
+# debug_artifacts/duckduckgo_youtube_search_workflow/<run-id>/.
+uv run python scripts/replay_yaml_workflow.py \
+    scripts/workflow/duckduckgo_youtube_search_workflow.yaml \
+    --param search_query=youtube --param youtube_query="big buck bunny" \
+    --param watch_seconds=20 --runs 3
 
 # Regenerate from the natural-language spec (needs an API key). --attempts N
-# generates N times and reports how many distinct action sequences came out.
-uv run python scripts/netgent/run_google_youtube_search.py --attempts 3
+# generates N times and reports how many distinct action sequences came out;
+# the result is saved as scripts/workflow/duckduckgo_youtube_search_workflow.json.
+uv run python scripts/netgent/run_duckduckgo_youtube_search.py --attempts 2
 ```
 
 ## Authoring workflows in YAML
@@ -256,7 +253,8 @@ result = client.run_workflow(
   `cdp_url=` to `NetGent`) to drive a remote Browserless Chromium instead of a
   local one.
 - **Real Chrome** — set `BROWSER_CHANNEL=chrome` (or pass `browser_channel=`)
-  to launch the installed Google Chrome instead of the bundled Chromium. The
+  to launch the installed Google Chrome instead of the bundled Chromium
+  (needed for sites with bot checks, e.g. Google Search). The
   engine replay path and the LLM generation path share the same stealth launch
   configuration (`open_browser_session`), so generated workflows replay in an
   identically-fingerprinted browser.
