@@ -128,7 +128,10 @@ async def main() -> None:
             parameters=parameters,
         )
         workflow = generated.get("workflow")
+        # The browser agent nests the execute outcome: {"result": {"result": {"success": ...}}}
         result = generated.get("result") or {}
+        if "success" not in result and isinstance(result.get("result"), dict):
+            result = result["result"]
         if isinstance(workflow, dict):
             workflow = _append_playing_assertion(workflow)
             attempt_path = _write_workflow(workflow, f"{WORKFLOW_NAME}.attempt{attempt:02d}.json")
