@@ -186,10 +186,12 @@ back-to-back (3/3 in testing, ~70 s each).
 # Replay 3× in fresh browsers with a consistency summary. Each run writes
 # per-action screenshots, run.log, and result.json under
 # debug_artifacts/duckduckgo_youtube_search_workflow/<run-id>/.
-uv run python scripts/replay_yaml_workflow.py \
-    scripts/workflow/duckduckgo_youtube_search_workflow.yaml \
-    --param search_query=youtube --param youtube_query="big buck bunny" \
-    --param watch_seconds=20 --runs 3
+uv run python scripts/replay_duckduckgo_youtube_search_workflow.py \
+    --youtube-query "big buck bunny" --watch-seconds 20 --runs 3
+
+# Or replay the LLM-generated JSON instead of the hand-written YAML:
+uv run python scripts/replay_duckduckgo_youtube_search_workflow.py \
+    --workflow scripts/workflow/duckduckgo_youtube_search_workflow.json
 
 # Regenerate from the natural-language spec (needs an API key). --attempts N
 # generates N times and reports how many distinct action sequences came out;
