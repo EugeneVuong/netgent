@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import re
 from functools import wraps
 from typing import Any
 
@@ -858,6 +859,215 @@ async def select_dropdown_option(
     ) from last_error
 
 
+_YOUTUBE_STATS_JS = """
+(withNerdStats) => {
+  const out = { collected: false };
+  const player = document.querySelector('#movie_player')
+              || document.querySelector('.html5-video-player');
+  const video = document.querySelector('video');
+
+  if (video) {
+    out.collected = true;
+    out.video_width = video.videoWidth;
+    out.video_height = video.videoHeight;
+    out.resolution = video.videoWidth + 'x' + video.videoHeight;
+    out.current_time = video.currentTime;
+    out.paused = video.paused;
+    out.ready_state = video.readyState;
+    try {
+      if (video.buffered && video.buffered.length) {
+        const end = video.buffered.end(video.buffered.length - 1);
+        out.buffer_health = end - video.currentTime;
+      } else {
+        out.buffer_health = null;
+      }
+    } catch (e) { out.buffer_health = null; }
+    try {
+      const q = video.getVideoPlaybackQuality ? video.getVideoPlaybackQuality() : null;
+      if (q) {
+        out.dropped_frames = q.droppedVideoFrames;
+        out.total_frames = q.totalVideoFrames;
+      }
+    } catch (e) {}
+  }
+
+  if (player) {
+    try {
+      out.playback_quality = player.getPlaybackQuality ? player.getPlaybackQuality() : null;
+    } catch (e) {}
+    try {
+      out.available_quality = player.getAvailableQualityLevels
+        ? player.getAvailableQualityLevels()
+        : null;
+    } catch (e) {}
+    try {
+      out.loaded_fraction = player.getVideoLoadedFraction ? player.getVideoLoadedFraction() : null;
+    } catch (e) {}
+    try { out.player_state = player.getPlayerState ? player.getPlayerState() : null; } catch (e) {}
+    try {
+      const s = (withNerdStats && player.getStatsForNerds) ? player.getStatsForNerds() : null;
+      if (s) {
+        out.collected = true;
+        out.stats_for_nerds = s;
+        if (s.codecs) out.codecs = s.codecs;
+        if (s.resolution) out.optimal_res = s.resolution;
+        if (s.video_id) out.video_id = s.video_id;
+        if (s.viewport) out.viewport = s.viewport;
+        if (s.bandwidth_kbps) {
+          const bw = parseFloat(String(s.bandwidth_kbps).replace(/[^0-9.]/g, ''));
+          if (!isNaN(bw)) out.bandwidth_kbps = bw;
+        }
+      }
+    } catch (e) {}
+  }
+  return out;
+}
+"""
+
+_ITAG_RE = re.compile(r"\((\d+)\)")
+
+
+def _itags_from_codecs(codecs: Any) -> list[int]:
+    """YouTube reports codecs as 'vp09.00.40.08 (248) / opus (251)'."""
+    if not isinstance(codecs, str):
+        return []
+    return [int(m) for m in _ITAG_RE.findall(codecs)]
+
+
+@action(name="youtube_stats")
+async def youtube_stats(
+    samples: str = "1",
+    interval_seconds: str = "1",
+    nerd_stats_every: str = "5",
+    ctx: ActionContext | None = None,
+) -> dict[str, Any]:
+    """Poll the YouTube player for its Stats-for-nerds telemetry.
+
+    Reads the HTML5 ``<video>`` element (resolution, buffer health, dropped
+    frames -- stable across YouTube releases) and, when available, the player's
+    own ``getStatsForNerds()`` (codecs/itag, optimal res, bandwidth estimate).
+
+    Because it polls, this action doubles as the watch timer: ``samples`` x
+    ``interval_seconds`` is how long playback runs. The per-sample series is
+    returned under ``samples``; the last sample is flattened to the top level so
+    downstream analysis can read ``resolution`` / ``buffer_health`` /
+    ``dropped_frames`` / ``itag`` without walking the series.
+    """
+    ctx = ctx or ActionContext()
+    page = _resolve_page(ctx)
+
+    try:
+        n_samples = max(int(float(samples)), 1)
+    except (ValueError, TypeError):
+        n_samples = 1
+    try:
+        interval = max(float(interval_seconds), 0.1)
+    except (ValueError, TypeError):
+        interval = 1.0
+    # getStatsForNerds() rebuilds the whole debug panel; calling it every
+    # sample is heavy enough to be worth throttling. The <video> element
+    # fields (resolution, buffer health, dropped frames) are read every sample
+    # regardless -- only the codec/itag/bandwidth extras are throttled.
+    try:
+        nerd_every = max(int(float(nerd_stats_every)), 1)
+    except (ValueError, TypeError):
+        nerd_every = 5
+
+    series: list[dict[str, Any]] = []
+    errors: list[str] = []
+    t0: float | None = None
+    consecutive_failures = 0
+    stopped_early: str | None = None
+
+    for i in range(n_samples):
+        if i:
+            await asyncio.sleep(interval)
+        try:
+            sample = await page.evaluate(_YOUTUBE_STATS_JS, i % nerd_every == 0)
+        except PlaywrightError as exc:
+            errors.append(str(exc))
+            consecutive_failures += 1
+            # A closed page/context never recovers -- bail instead of sleeping
+            # out the rest of the watch window against a dead browser.
+            if consecutive_failures >= 3:
+                stopped_early = f"player page went away after {len(series)} sample(s): {exc}"
+                break
+            continue
+        consecutive_failures = 0
+        if not isinstance(sample, dict):
+            continue
+        now = asyncio.get_event_loop().time()
+        if t0 is None:
+            t0 = now
+        sample["rel_t"] = round(now - t0, 3)
+        sample["sample_index"] = i
+        itags = _itags_from_codecs(sample.get("codecs"))
+        if itags:
+            sample["itag"] = itags[0]
+            sample["itags"] = itags
+        series.append(sample)
+
+    collected = [s for s in series if s.get("collected")]
+    result: dict[str, Any] = {
+        "samples": series,
+        "sample_count": len(series),
+        "collected_count": len(collected),
+        "interval_seconds": interval,
+        "watched_seconds": round((n_samples - 1) * interval, 2),
+    }
+    if errors:
+        result["errors"] = errors[:5]
+    if stopped_early:
+        result["stopped_early"] = stopped_early
+
+    if collected:
+        # The <video> fields are read every sample, but the getStatsForNerds()
+        # extras only every nerd_every-th one -- so flatten the most recent
+        # non-null value per key rather than whatever the final sample held.
+        for key in (
+            "resolution",
+            "optimal_res",
+            "viewport",
+            "codecs",
+            "itag",
+            "buffer_health",
+            "dropped_frames",
+            "total_frames",
+            "bandwidth_kbps",
+            "playback_quality",
+            "available_quality",
+            "video_id",
+            "stats_for_nerds",
+        ):
+            for sample in reversed(collected):
+                if sample.get(key) is not None:
+                    result[key] = sample[key]
+                    break
+        drops = [
+            s["dropped_frames"]
+            for s in collected
+            if isinstance(s.get("dropped_frames"), (int, float))
+        ]
+        if drops:
+            result["dropped_frames_total"] = max(drops)
+        resolutions = [s["resolution"] for s in collected if s.get("resolution")]
+        if resolutions:
+            result["resolutions_seen"] = sorted(set(resolutions))
+            result["resolution_switches"] = sum(
+                1 for a, b in zip(resolutions, resolutions[1:], strict=False) if a != b
+            )
+        result["message"] = (
+            f"Collected {len(collected)} YouTube player samples; "
+            f"final resolution {result.get('resolution')}"
+        )
+    else:
+        result["message"] = (
+            "No YouTube player found on the page (is this a watch page, and did playback start?)"
+        )
+
+    return result
+
+
 PLAYWRIGHT_ACTIONS = (
     go_to_url,
     go_back,
@@ -868,6 +1078,7 @@ PLAYWRIGHT_ACTIONS = (
     send_keys,
     scroll_to_text,
     select_dropdown_option,
+    youtube_stats,
 )
 
 
@@ -882,4 +1093,5 @@ __all__ = [
     "select_dropdown_option",
     "send_keys",
     "wait",
+    "youtube_stats",
 ]
